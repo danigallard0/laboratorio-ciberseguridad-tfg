@@ -1,99 +1,47 @@
-# Laboratorio de Ciberseguridad — Pentest de principio a fin
+# Laboratorio de Ciberseguridad — TFG
 
+![Status](https://img.shields.io/badge/5%2F5%20bloques-Completo-success?style=for-the-badge)
 ![Kali Linux](https://img.shields.io/badge/Kali_Linux-557C94?style=for-the-badge&logo=kalilinux&logoColor=white)
-![Metasploit](https://img.shields.io/badge/Metasploit-2596CD?style=for-the-badge&logo=metasploit&logoColor=white)
-![OpenVAS](https://img.shields.io/badge/OpenVAS%2FGreenbone-8BC53F?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)
-![Status](https://img.shields.io/badge/Bloque%20Ofensivo-Completo-success?style=for-the-badge)
+![Wazuh](https://img.shields.io/badge/Wazuh-005571?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Gophish](https://img.shields.io/badge/Gophish-4285F4?style=for-the-badge)
 
-Laboratorio de ciberseguridad construido y operado de forma íntegra por mí, como parte de mi TFG en Ciberseguridad. Entorno completamente aislado (sin salida a Internet salvo en las fases que explícitamente lo requieren), con evidencia y metodología documentadas en cada paso.
+Laboratorio de ciberseguridad diseñado, construido y operado de forma íntegra por mí, como Trabajo de Fin de Grado en Ciberseguridad. Tres máquinas virtuales propias (una atacante, dos víctimas) en una red aislada, más un SIEM real desplegado en la nube, usadas para recorrer el ciclo completo de la seguridad ofensiva y defensiva: atacar un sistema de verdad, analizar su código antes de desplegarlo, proteger lo que ya está roto, detectar y responder cuando falla, y gobernar todo el proceso con los marcos de referencia reales del sector.
 
-Este repositorio recoge el **Bloque Ofensivo**: reconocimiento, análisis de vulnerabilidades, explotación, post-explotación e informe de pentest profesional. El resto de bloques (Desarrollo Seguro, Protección, SOC/IR, Gobierno) se irán añadiendo a medida que se completen.
+No es una colección de writeups de vulnerabilidades conocidas. El valor de este proyecto está en lo que no sale en un tutorial: los fallos reales de cada herramienta, las decisiones tomadas con criterio propio en vez de seguir una checklist, y la honestidad de documentar lo que queda pendiente en vez de maquillarlo.
 
 ---
 
-## Arquitectura del laboratorio
+## Los 5 bloques
 
-![Diagrama de red](diagrama_red_laboratorio_ofensivo.png)
-
-| Máquina | Rol | Sistema | Notas |
-|---|---|---|---|
-| Kali Linux | Atacante | Kali 2026.2, ARM64 nativo | nmap, Metasploit, OpenVAS, John the Ripper, proxychains |
-| Metasploitable2 | Víctima — sistema | Ubuntu 8.04, x86_64 emulado | Servicios de red deliberadamente desactualizados |
-| DVWA | Víctima — aplicación web | Ubuntu Server 24.04 + Apache/MariaDB/PHP | Sistema base actualizado, vulnerabilidades a nivel de app |
-
-Hipervisor: UTM sobre Apple Silicon. Red interna Host-Only, sin conectividad externa salvo en la fase de OSINT (contra un dominio público de práctica, nunca contra las víctimas del laboratorio).
+| Bloque | Contenido | Enlace |
+|---|---|---|
+| **1. Ofensivo** | Reconocimiento, OpenVAS, 4 vectores de explotación reales, post-explotación, informe de pentest profesional | [`bloque-ofensivo/`](bloque-ofensivo/) |
+| **2. Desarrollo Seguro** | SAST (Semgrep), DAST (OWASP ZAP), CVSS manual, modelado de amenazas STRIDE, pipeline DevSecOps real en GitHub Actions, 3 vulnerabilidades corregidas y verificadas | [`bloque-devseguro/`](bloque-devseguro/) |
+| **3. Protección** | IAM y MFA real por TOTP, hardening y firewall deny-by-default, gestión formal de vulnerabilidades, campaña de phishing real con Gophish | [`bloque-proteccion/`](bloque-proteccion/) |
+| **4. SOC / Respuesta a Incidentes** | SIEM Wazuh en la nube, caso de uso SOC, Threat Hunting, playbook operativo, simulacro de incidente con exfiltración, forense con Autopsy, PCN probado de verdad | [`bloque-soc-ir/`](bloque-soc-ir/) |
+| **5. Gobierno** | Política de Seguridad (ISO 27001), evaluación de riesgos (MAGERIT v3), Plan Director de Seguridad a 12 meses (NIST CSF) | [`bloque-gobierno/`](bloque-gobierno/) |
 
 ---
 
-## Metodología
+## Arquitectura
 
-Seguido conforme a **PTES** (Penetration Testing Execution Standard), con apoyo de **OSSTMM** para la fase de recogida de información:
+Tres máquinas virtuales sobre UTM (Apple Silicon), en una red interna Host-Only sin conectividad externa salvo cuando una fase lo requiere explícitamente:
 
-`Reconocimiento` → `Análisis de vulnerabilidades` → `Explotación` → `Post-explotación` → `Informe`
-
----
-
-## Reconocimiento
-
-9 técnicas distintas combinadas, activas y pasivas:
-
-| Técnica | Herramienta |
+| Máquina | Rol |
 |---|---|
-| Escaneo de puertos/servicios | Nmap |
-| WHOIS | `whois` |
-| Reconocimiento DNS pasivo | DNSdumpster |
-| Recolección de emails/subdominios | TheHarvester |
-| OSINT automatizado | SpiderFoot |
-| Huella en redes sociales | Sherlock |
-| Script de reconocimiento propio | Python (fuerza bruta de subdominios + robots.txt) |
-| Análisis TLS | sslscan |
+| Kali Linux | Atacante |
+| Metasploitable2 | Víctima — sistema operativo deliberadamente desactualizado |
+| DVWA (Ubuntu + Apache + MariaDB) | Víctima — aplicación web vulnerable |
+
+A partir del Bloque SOC/IR se añade una cuarta pieza fuera del laboratorio local: una instancia de **Wazuh en Oracle Cloud**, que recibe logs de las dos máquinas víctima para poder tener un SIEM real sin necesitar más RAM de la que da el propio Mac.
 
 ---
 
-## Análisis de vulnerabilidades
+## Cómo leer este repositorio
 
-Escaneo automatizado con **OpenVAS/Greenbone** (self-hosted) combinado con búsqueda manual en Exploit-DB:
-
-- **34 CVEs** identificados sobre 2 hosts
-- Severidad desde **10.0 (Crítico)** hasta **2.1 (Bajo)**
-- Análisis CVSS v3.1 manual sobre los hallazgos más relevantes, incluyendo un caso donde el escáner automático puntuaba una vulnerabilidad como Media (6.0) mientras que la explotación real demostraba un impacto Crítico (9.8) — verificación manual frente a confianza ciega en la herramienta.
+Cada bloque tiene su propio README con metodología, hallazgos reales (incluidos los que no salieron a la primera), evidencias seleccionadas y, donde aplica, el documento formal completo (informe de pentest, playbook de respuesta, política de seguridad...). Los 5 bloques están pensados para leerse en orden — cada uno se apoya en hallazgos del anterior — pero cada README funciona también de forma independiente.
 
 ---
 
-## Explotación — 4 vectores de acceso, ninguno con credenciales válidas
-
-| # | Vector | Objetivo | Resultado | CVE |
-|---|---|---|---|---|
-| 1 | Backdoor en servicio FTP | Sistema Linux | Shell de root | CVE-2011-2523 |
-| 2 | RCE en servicio de compartición de ficheros | Sistema Linux | Sesión de root vía Metasploit | CVE-2007-2447 |
-| 3 | Inyección SQL | Aplicación web | Volcado y cracking de credenciales | — |
-| 4 | Command Injection | Aplicación web | Shell reversa interactiva | — |
-
----
-
-## Post-explotación
-
-Ciclo completo tras el acceso inicial:
-
-- **Persistencia** — tarea programada que sobrevive a un reinicio completo del sistema
-- **Movimiento lateral** — pivoting hacia el segundo host mediante proxy SOCKS sobre una sesión Meterpreter
-- **Exfiltración** — extracción de credenciales reales desde la configuración de la aplicación
-- **Covering tracks** — intento de limpieza de logs, bloqueado por una correcta separación de privilegios del sistema operativo (el único control que resistió de verdad durante todo el ejercicio)
-
----
-
-## Informe de pentest
-
-Documento completo con resumen ejecutivo orientado a dirección, metodología, hallazgos detallados (severidad, descripción, remediación) y tabla de riesgos priorizada — disponible en [`informe-pentest/`](./informe-pentest/).
-
----
-
-## Lo que me llevo
-
-Ninguna de las vulnerabilidades explotadas es nueva — la más reciente lleva documentada más de una década. Lo que realmente pone a prueba es todo lo que no sale en un writeup limpio: una shell que no se comporta como esperas, una máquina que se cae justo cuando más la necesitas, tener que parar y entender por qué antes de seguir. Ese es el tipo de fricción con la que de verdad se topa cualquiera que haga esto en serio.
-
----
-
-*Laboratorio propio, aislado y sin conexión a redes de producción ni de terceros. Todas las pruebas se realizaron exclusivamente sobre sistemas de mi propiedad.*
+*Todos los sistemas, datos y evidencias de este proyecto pertenecen a un laboratorio propio, aislado y sin conexión a redes de producción ni de terceros. Ninguna prueba se realizó contra sistemas ajenos.*
